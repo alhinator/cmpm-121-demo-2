@@ -24,6 +24,8 @@ if (canvasContext == undefined) {
 //create cursor objecct
 const cursor = { active: false, x: 0, y: 0 };
 
+//create array of points to store mouse data in.
+
 //when mouse is pressed, start active drawing
 mainCanvas.addEventListener("mousedown", (e) => {
     cursor.active = true;
