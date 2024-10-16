@@ -26,13 +26,16 @@ if (canvasContext == undefined) {
 //create cursor objecct
 const cursor = { active: false, x: 0, y: 0 };
 
+//define the data structure we're using to store points
 type Coord = {
     x: number;
     y: number;
 };
+//a line is an array of coordinates. a list of lines makes up our lines and redolines
 const lines: Coord[][] = [];
 const redoLines: Coord[][] = [];
 
+//set the current line to be empty
 let currLine: Coord[] = [];
 
 //create array of points to store mouse data in.
@@ -43,7 +46,7 @@ mainCanvas.addEventListener("mousedown", (e) => {
     cursor.x = e.offsetX;
     cursor.y = e.offsetY;
 
-    //initialize
+    //initialize current line with a starting point
     currLine = [{ x: cursor.x, y: cursor.y }];
 
     //push when mouse goes down
@@ -94,6 +97,8 @@ mainCanvas.addEventListener("drawing-changed", (e) => {
 
 const buttonSection = document.createElement("div");
 //do clear, undo, redo buttons
+
+//clear
 const clearCanvasButton = document.createElement("button");
 buttonSection.appendChild(clearCanvasButton);
 clearCanvasButton.innerText = "CLEAR";
@@ -105,6 +110,7 @@ clearCanvasButton.addEventListener("click", () => {
     mainCanvas.dispatchEvent(drawChanged);
 });
 
+//undo
 const undoButton = document.createElement("button");
 buttonSection.appendChild(undoButton);
 undoButton.innerText = "UNDO";
@@ -113,23 +119,20 @@ undoButton.addEventListener("click", () => {
     let tmp = lines.pop();
     if (typeof tmp == "object") {
         redoLines.push(tmp);
-        console.log(typeof tmp, "pushed")
     }
     mainCanvas.dispatchEvent(drawChanged);
 });
 
+//redo
 const redoButton = document.createElement("button");
 buttonSection.appendChild(redoButton);
 redoButton.innerText = "REDO";
 redoButton.addEventListener("click", () => {
     canvasContext.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-    if (redoLines.length > 0) {
-        let tmp = redoLines.pop();
-        if (typeof tmp == "object") {
-            lines.push(tmp);
-        }
+    let tmp = redoLines.pop();
+    if (typeof tmp == "object") {
+        lines.push(tmp);
     }
-
     mainCanvas.dispatchEvent(drawChanged);
 });
 
