@@ -57,6 +57,7 @@ mainCanvas.addEventListener("mousedown", (e) => {
     mainCanvas.dispatchEvent(drawChanged);
 });
 
+
 //if mouse is active and moving, draw at its position
 mainCanvas.addEventListener("mousemove", (e) => {
     if (cursor.active) {
