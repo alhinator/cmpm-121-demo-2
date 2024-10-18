@@ -29,26 +29,44 @@ if (canvasContext == undefined) {
     throw "Canvas 2d context undefined.";
 }
 
-//create cursor objecct
-
+//cursor object is replaced with the Tool object
 class Tool {
     static xpos: number;
     static ypos: number;
     static active: boolean = false;
     static thickness: MARKER_SIZE = MARKER_SIZE.Thin;
+    static drawEmojis: boolean = false;
+    static currentEmoji: string;
     static draw(ctx: CanvasRenderingContext2D) {
-        ctx.lineWidth = this.thickness;
-        ctx.beginPath();
-        ctx.ellipse(
-            this.xpos,
-            this.ypos,
-            this.thickness,
-            this.thickness,
-            0,
-            0,
-            360
-        );
-        ctx.stroke();
+        if (!this.drawEmojis) {
+            ctx.lineWidth = this.thickness;
+            ctx.beginPath();
+            ctx.ellipse(
+                this.xpos,
+                this.ypos,
+                this.thickness,
+                this.thickness,
+                0,
+                0,
+                360
+            );
+            ctx.stroke();
+        } else {
+            ctx.beginPath();
+            ctx.fillText(this.currentEmoji, this.xpos, this.ypos);
+        }
+    }
+    static thinMode() {
+        this.thickness = MARKER_SIZE.Thin;
+        this.drawEmojis = false;
+    }
+    static thickMode() {
+        this.thickness = MARKER_SIZE.Thick;
+        this.drawEmojis = false;
+    }
+    static set emojiMode(_emoji: string) {
+        this.drawEmojis = true;
+        this.currentEmoji = _emoji;
     }
 }
 
@@ -56,6 +74,7 @@ class Tool {
 class Coord {
     static lines: Coord[] = [];
     static redoLines: Coord[] = [];
+    static currLine: Coord;
     x: number[] = [];
     y: number[] = [];
     thickness: MARKER_SIZE;
@@ -82,10 +101,29 @@ class Coord {
         this.y.push(_y);
     }
 }
-//a line is an array of coordinates. a list of lines makes up our lines and redolines
 
-//set the current line to be empty
-let currLine: Coord;
+class Emoji {
+    static currEmoji: Emoji;
+    static placedEmotes: Emoji[] = [];
+    x: number;
+    y: number;
+    emoticon: string;
+    constructor(_x: number, _y: number, _emoticon: string) {
+        this.x = _x;
+        this.y = _y;
+        this.emoticon = _emoticon;
+        Emoji.placedEmotes.push(this);
+        Emoji.currEmoji = this;
+    }
+    display(ctx: CanvasRenderingContext2D) {
+        ctx.beginPath();
+        ctx.fillText(this.emoticon, this.x, this.y);
+    }
+    move(_newX: number, _newY: number) {
+        this.x = _newX;
+        this.y = _newY;
+    }
+}
 
 //when mouse is pressed, start active drawing
 mainCanvas.addEventListener("mousedown", (e) => {
@@ -93,13 +131,15 @@ mainCanvas.addEventListener("mousedown", (e) => {
     Tool.xpos = e.offsetX;
     Tool.ypos = e.offsetY;
 
-    //initialize current line with a starting point
-    currLine = new Coord(Tool.xpos, Tool.ypos, currSize);
-    //push to list of all lines & reset redos
-    Coord.lines.push(currLine);
-    Coord.redoLines.splice(0, Coord.redoLines.length);
-
-    //no longer need o call dispach on mousedown only mousemove
+    if (!Tool.drawEmojis) {
+        //initialize current line with a starting point
+        Coord.currLine = new Coord(Tool.xpos, Tool.ypos, currSize);
+        //push to list of all lines & reset redos
+        Coord.lines.push(Coord.currLine);
+        Coord.redoLines.splice(0, Coord.redoLines.length);
+    } else {
+        new Emoji(Tool.xpos, Tool.ypos, Tool.currentEmoji);
+    }
 });
 
 //if mouse is active and moving, draw at its position
@@ -108,7 +148,11 @@ mainCanvas.addEventListener("mousemove", (e) => {
     Tool.ypos = e.offsetY;
     mainCanvas.dispatchEvent(toolMoved);
     if (Tool.active) {
-        currLine.extend(Tool.xpos, Tool.ypos);
+        if (!Tool.drawEmojis) {
+            Coord.currLine.extend(Tool.xpos, Tool.ypos);
+        } else {
+            Emoji.currEmoji.move(Tool.xpos, Tool.ypos);
+        }
     }
     mainCanvas.dispatchEvent(drawChanged);
 
@@ -124,13 +168,15 @@ mainCanvas.addEventListener("mouseup", (e) => {
 
 //canvas dispatch event
 const drawChanged = new Event("drawing-changed");
-
 mainCanvas.addEventListener("drawing-changed", (e) => {
     canvasContext.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
     if (!Tool.active) {
         Tool.draw(canvasContext);
     }
     Coord.lines.forEach((element) => {
+        element.display(canvasContext);
+    });
+    Emoji.placedEmotes.forEach((element) => {
         element.display(canvasContext);
     });
 });
@@ -144,7 +190,6 @@ mainCanvas.addEventListener("tool-moved", (e) => {
 
 const buttonSection = document.createElement("div");
 //do clear, undo, redo buttons
-
 //clear
 const clearCanvasButton = document.createElement("button");
 buttonSection.appendChild(clearCanvasButton);
@@ -182,11 +227,18 @@ redoButton.addEventListener("click", () => {
     }
     mainCanvas.dispatchEvent(drawChanged);
 });
-buttonSection.appendChild(redoButton);
 app.appendChild(buttonSection);
 
 //line button holder
 const markerHolder = document.createElement("div");
+
+const buttonClear = new Event("button-clear");
+mainCanvas.addEventListener("button-clear", (event) => {
+    let buttArray = document.getElementsByClassName("selected-tool");
+    for (let i = 0; i < buttArray.length; i++) {
+        buttArray[i].setAttribute("class", "");
+    }
+});
 
 //thin line
 const thinButton = document.createElement("button");
@@ -194,9 +246,9 @@ thinButton.setAttribute("class", "selected-tool");
 thinButton.innerText = "Thin Marker";
 thinButton.addEventListener("click", () => {
     currSize = MARKER_SIZE.Thin;
-    Tool.thickness = MARKER_SIZE.Thin;
+    Tool.thinMode();
+    mainCanvas.dispatchEvent(buttonClear);
     thinButton.setAttribute("class", "selected-tool");
-    thickButton.setAttribute("class", "");
 });
 markerHolder.appendChild(thinButton);
 //thick line
@@ -204,10 +256,37 @@ const thickButton = document.createElement("button");
 thickButton.innerText = "Thick Marker";
 thickButton.addEventListener("click", () => {
     currSize = MARKER_SIZE.Thick;
-    Tool.thickness = MARKER_SIZE.Thick;
+    Tool.thickMode();
+    mainCanvas.dispatchEvent(buttonClear);
     thickButton.setAttribute("class", "selected-tool");
-    thinButton.setAttribute("class", "");
 });
 markerHolder.appendChild(thickButton);
 
 app.appendChild(markerHolder);
+
+//emoji buttons
+const emojiSection = document.createElement("div");
+//do clear, undo, redo buttons
+//clear
+const emote1 = document.createElement("button");
+emojiSection.appendChild(emote1);
+emote1.innerText = "✨";
+emote1.addEventListener("click", (event) => emojiCallback(emote1));
+
+const emote2 = document.createElement("button");
+emojiSection.appendChild(emote2);
+emote2.innerText = "💀";
+emote2.addEventListener("click", (event) => emojiCallback(emote2));
+
+const emote3 = document.createElement("button");
+emojiSection.appendChild(emote3);
+emote3.innerText = "👍";
+emote3.addEventListener("click", (event) => emojiCallback(emote3));
+app.appendChild(emojiSection);
+
+function emojiCallback(_theButton: HTMLButtonElement) {
+    mainCanvas.dispatchEvent(buttonClear);
+    _theButton.setAttribute("class", "selected-tool");
+    mainCanvas.dispatchEvent(toolMoved);
+    Tool.emojiMode = _theButton.innerText;
+}
