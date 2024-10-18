@@ -198,7 +198,7 @@ clearCanvasButton.addEventListener("click", () => {
     canvasContext.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
     Coord.lines.splice(0, Coord.lines.length);
     Coord.redoLines.splice(0, Coord.redoLines.length);
-
+    Emoji.placedEmotes.splice(0, Emoji.placedEmotes.length)
     mainCanvas.dispatchEvent(drawChanged);
 });
 
