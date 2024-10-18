@@ -5,6 +5,12 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 
 document.title = APP_NAME;
 
+enum MARKER_SIZE {
+    Thin = 1,
+    Thick = 5,
+}
+let currSize: MARKER_SIZE = MARKER_SIZE.Thin;
+
 //create title
 const mainHeader = document.createElement("h1");
 mainHeader.innerText = APP_NAME;
@@ -32,16 +38,18 @@ class Coord {
     static redoLines: Coord[] = [];
     x: number[] = [];
     y: number[] = [];
-    constructor(_x: number, _y: number) {
-        this.x.push(_x)
-        this.y.push(_y)
+    thickness: MARKER_SIZE;
+    constructor(_x: number, _y: number, _thicc: MARKER_SIZE) {
+        this.x.push(_x);
+        this.y.push(_y);
+        this.thickness = _thicc;
     }
     public display(ctx: CanvasRenderingContext2D) {
         if (this.x.length != this.y.length) {
             throw "Coord: display(): x and y coord array lengths are not the same.";
             return -1;
         }
-
+        ctx.lineWidth = this.thickness;
         ctx.beginPath();
         ctx.moveTo(this.x[0], this.y[0]);
         for (let i = 0; i < this.x.length; i++) {
@@ -66,12 +74,12 @@ mainCanvas.addEventListener("mousedown", (e) => {
     cursor.y = e.offsetY;
 
     // //initialize current line with a starting point
-    currLine = new Coord(cursor.x, cursor.y);
+    currLine = new Coord(cursor.x, cursor.y, currSize);
     //push to list of all lines & reset redos
     Coord.lines.push(currLine);
     Coord.redoLines.splice(0, Coord.redoLines.length);
 
-   //no longer need o call dispach on mousedown only mousemove
+    //no longer need o call dispach on mousedown only mousemove
 });
 
 //if mouse is active and moving, draw at its position
@@ -142,5 +150,30 @@ redoButton.addEventListener("click", () => {
     }
     mainCanvas.dispatchEvent(drawChanged);
 });
-
+buttonSection.appendChild(redoButton);
 app.appendChild(buttonSection);
+
+//line button holder
+const markerHolder = document.createElement("div");
+
+//thin line
+const thinButton = document.createElement("button");
+thinButton.setAttribute("class", "selected-tool");
+thinButton.innerText = "Thin Marker";
+thinButton.addEventListener("click", () => {
+    currSize = MARKER_SIZE.Thin;
+    thinButton.setAttribute("class", "selected-tool");
+    thickButton.setAttribute("class", "");
+});
+markerHolder.appendChild(thinButton);
+//thick line
+const thickButton = document.createElement("button");
+thickButton.innerText = "Thick Marker";
+thickButton.addEventListener("click", () => {
+    currSize = MARKER_SIZE.Thick;
+    thickButton.setAttribute("class", "selected-tool");
+    thinButton.setAttribute("class", "");
+});
+markerHolder.appendChild(thickButton);
+
+app.appendChild(markerHolder);
