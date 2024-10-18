@@ -55,13 +55,9 @@ class Coord {
     }
 }
 //a line is an array of coordinates. a list of lines makes up our lines and redolines
-// const lines: Coord[][] = [];
-// const redoLines: Coord[][] = [];
 
 //set the current line to be empty
 let currLine: Coord;
-
-//create array of points to store mouse data in.
 
 //when mouse is pressed, start active drawing
 mainCanvas.addEventListener("mousedown", (e) => {
@@ -70,17 +66,12 @@ mainCanvas.addEventListener("mousedown", (e) => {
     cursor.y = e.offsetY;
 
     // //initialize current line with a starting point
-    // currLine = [{ x: cursor.x, y: cursor.y }];
-
-    // //push when mouse goes down
-    // lines.push(currLine);
     currLine = new Coord(cursor.x, cursor.y);
+    //push to list of all lines & reset redos
     Coord.lines.push(currLine);
     Coord.redoLines.splice(0, Coord.redoLines.length);
 
-    // //splice the redo lines
-    // redoLines.splice(0, redoLines.length);
-    mainCanvas.dispatchEvent(drawChanged);
+   //no longer need o call dispach on mousedown only mousemove
 });
 
 //if mouse is active and moving, draw at its position
@@ -88,9 +79,7 @@ mainCanvas.addEventListener("mousemove", (e) => {
     if (cursor.active) {
         cursor.x = e.offsetX;
         cursor.y = e.offsetY;
-
         currLine.extend(cursor.x, cursor.y);
-
         mainCanvas.dispatchEvent(drawChanged);
     }
 });
