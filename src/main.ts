@@ -155,8 +155,6 @@ mainCanvas.addEventListener("mousemove", (e) => {
         }
     }
     mainCanvas.dispatchEvent(drawChanged);
-
-    //call toolMoved after the drawChanged - that way canvas has been cleared.
 });
 
 //stop drawing on mouseup
