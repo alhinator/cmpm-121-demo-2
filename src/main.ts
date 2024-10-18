@@ -27,16 +27,39 @@ if (canvasContext == undefined) {
 const cursor = { active: false, x: 0, y: 0 };
 
 //define the data structure we're using to store points
-type Coord = {
-    x: number;
-    y: number;
-};
+class Coord {
+    static lines: Coord[] = [];
+    static redoLines: Coord[] = [];
+    x: number[] = [];
+    y: number[] = [];
+    constructor(_x: number, _y: number) {
+        this.x.push(_x)
+        this.y.push(_y)
+    }
+    public display(ctx: CanvasRenderingContext2D) {
+        if (this.x.length != this.y.length) {
+            throw "Coord: display(): x and y coord array lengths are not the same.";
+            return -1;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(this.x[0], this.y[0]);
+        for (let i = 0; i < this.x.length; i++) {
+            ctx.lineTo(this.x[i], this.y[i]);
+        }
+        ctx.stroke();
+    }
+    public extend(_x: number, _y: number) {
+        this.x.push(_x);
+        this.y.push(_y);
+    }
+}
 //a line is an array of coordinates. a list of lines makes up our lines and redolines
-const lines: Coord[][] = [];
-const redoLines: Coord[][] = [];
+// const lines: Coord[][] = [];
+// const redoLines: Coord[][] = [];
 
 //set the current line to be empty
-let currLine: Coord[] = [];
+let currLine: Coord;
 
 //create array of points to store mouse data in.
 
@@ -46,17 +69,19 @@ mainCanvas.addEventListener("mousedown", (e) => {
     cursor.x = e.offsetX;
     cursor.y = e.offsetY;
 
-    //initialize current line with a starting point
-    currLine = [{ x: cursor.x, y: cursor.y }];
+    // //initialize current line with a starting point
+    // currLine = [{ x: cursor.x, y: cursor.y }];
 
-    //push when mouse goes down
-    lines.push(currLine);
+    // //push when mouse goes down
+    // lines.push(currLine);
+    currLine = new Coord(cursor.x, cursor.y);
+    Coord.lines.push(currLine);
+    Coord.redoLines.splice(0, Coord.redoLines.length);
 
-    //splice the redo lines
-    redoLines.splice(0, redoLines.length);
+    // //splice the redo lines
+    // redoLines.splice(0, redoLines.length);
     mainCanvas.dispatchEvent(drawChanged);
 });
-
 
 //if mouse is active and moving, draw at its position
 mainCanvas.addEventListener("mousemove", (e) => {
@@ -64,7 +89,7 @@ mainCanvas.addEventListener("mousemove", (e) => {
         cursor.x = e.offsetX;
         cursor.y = e.offsetY;
 
-        currLine.push({ x: cursor.x, y: cursor.y });
+        currLine.extend(cursor.x, cursor.y);
 
         mainCanvas.dispatchEvent(drawChanged);
     }
@@ -73,7 +98,7 @@ mainCanvas.addEventListener("mousemove", (e) => {
 //stop drawing on mouseup
 mainCanvas.addEventListener("mouseup", (e) => {
     cursor.active = false;
-    currLine = [];
+    //currLine = undefined;
     mainCanvas.dispatchEvent(drawChanged);
 });
 
@@ -83,17 +108,9 @@ const drawChanged = new Event("drawing-changed");
 mainCanvas.addEventListener("drawing-changed", (e) => {
     canvasContext.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
 
-    for (const line of lines) {
-        if (line.length > 1) {
-            canvasContext.beginPath();
-            const { x, y } = line[0];
-            canvasContext.moveTo(x, y);
-            for (const { x, y } of line) {
-                canvasContext.lineTo(x, y);
-            }
-            canvasContext.stroke();
-        }
-    }
+    Coord.lines.forEach((element) => {
+        element.display(canvasContext);
+    });
 });
 
 const buttonSection = document.createElement("div");
@@ -105,8 +122,8 @@ buttonSection.appendChild(clearCanvasButton);
 clearCanvasButton.innerText = "CLEAR";
 clearCanvasButton.addEventListener("click", () => {
     canvasContext.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-    lines.splice(0, lines.length);
-    redoLines.splice(0, redoLines.length);
+    Coord.lines.splice(0, Coord.lines.length);
+    Coord.redoLines.splice(0, Coord.redoLines.length);
 
     mainCanvas.dispatchEvent(drawChanged);
 });
@@ -117,9 +134,9 @@ buttonSection.appendChild(undoButton);
 undoButton.innerText = "UNDO";
 undoButton.addEventListener("click", () => {
     canvasContext.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-    let tmp = lines.pop();
+    let tmp = Coord.lines.pop();
     if (typeof tmp == "object") {
-        redoLines.push(tmp);
+        Coord.redoLines.push(tmp);
     }
     mainCanvas.dispatchEvent(drawChanged);
 });
@@ -130,9 +147,9 @@ buttonSection.appendChild(redoButton);
 redoButton.innerText = "REDO";
 redoButton.addEventListener("click", () => {
     canvasContext.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-    let tmp = redoLines.pop();
+    let tmp = Coord.redoLines.pop();
     if (typeof tmp == "object") {
-        lines.push(tmp);
+        Coord.lines.push(tmp);
     }
     mainCanvas.dispatchEvent(drawChanged);
 });
