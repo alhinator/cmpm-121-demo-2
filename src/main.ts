@@ -30,7 +30,27 @@ if (canvasContext == undefined) {
 }
 
 //create cursor objecct
-const cursor = { active: false, x: 0, y: 0 };
+
+class Tool {
+    static xpos: number;
+    static ypos: number;
+    static active: boolean = false;
+    static thickness: MARKER_SIZE = MARKER_SIZE.Thin;
+    static draw(ctx: CanvasRenderingContext2D) {
+        ctx.lineWidth = this.thickness;
+        ctx.beginPath();
+        ctx.ellipse(
+            this.xpos,
+            this.ypos,
+            this.thickness,
+            this.thickness,
+            0,
+            0,
+            360
+        );
+        ctx.stroke();
+    }
+}
 
 //define the data structure we're using to store points
 class Coord {
@@ -69,12 +89,12 @@ let currLine: Coord;
 
 //when mouse is pressed, start active drawing
 mainCanvas.addEventListener("mousedown", (e) => {
-    cursor.active = true;
-    cursor.x = e.offsetX;
-    cursor.y = e.offsetY;
+    Tool.active = true;
+    Tool.xpos = e.offsetX;
+    Tool.ypos = e.offsetY;
 
-    // //initialize current line with a starting point
-    currLine = new Coord(cursor.x, cursor.y, currSize);
+    //initialize current line with a starting point
+    currLine = new Coord(Tool.xpos, Tool.ypos, currSize);
     //push to list of all lines & reset redos
     Coord.lines.push(currLine);
     Coord.redoLines.splice(0, Coord.redoLines.length);
@@ -84,17 +104,20 @@ mainCanvas.addEventListener("mousedown", (e) => {
 
 //if mouse is active and moving, draw at its position
 mainCanvas.addEventListener("mousemove", (e) => {
-    if (cursor.active) {
-        cursor.x = e.offsetX;
-        cursor.y = e.offsetY;
-        currLine.extend(cursor.x, cursor.y);
-        mainCanvas.dispatchEvent(drawChanged);
+    Tool.xpos = e.offsetX;
+    Tool.ypos = e.offsetY;
+    mainCanvas.dispatchEvent(toolMoved);
+    if (Tool.active) {
+        currLine.extend(Tool.xpos, Tool.ypos);
     }
+    mainCanvas.dispatchEvent(drawChanged);
+
+    //call toolMoved after the drawChanged - that way canvas has been cleared.
 });
 
 //stop drawing on mouseup
 mainCanvas.addEventListener("mouseup", (e) => {
-    cursor.active = false;
+    Tool.active = false;
     //currLine = undefined;
     mainCanvas.dispatchEvent(drawChanged);
 });
@@ -104,10 +127,19 @@ const drawChanged = new Event("drawing-changed");
 
 mainCanvas.addEventListener("drawing-changed", (e) => {
     canvasContext.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-
+    if (!Tool.active) {
+        Tool.draw(canvasContext);
+    }
     Coord.lines.forEach((element) => {
         element.display(canvasContext);
     });
+});
+
+//tool moved dispach event
+const toolMoved = new Event("tool-moved");
+mainCanvas.addEventListener("tool-moved", (e) => {
+    //do stuff
+    //mainCanvas.dispatchEvent(drawChanged);
 });
 
 const buttonSection = document.createElement("div");
@@ -162,6 +194,7 @@ thinButton.setAttribute("class", "selected-tool");
 thinButton.innerText = "Thin Marker";
 thinButton.addEventListener("click", () => {
     currSize = MARKER_SIZE.Thin;
+    Tool.thickness = MARKER_SIZE.Thin;
     thinButton.setAttribute("class", "selected-tool");
     thickButton.setAttribute("class", "");
 });
@@ -171,6 +204,7 @@ const thickButton = document.createElement("button");
 thickButton.innerText = "Thick Marker";
 thickButton.addEventListener("click", () => {
     currSize = MARKER_SIZE.Thick;
+    Tool.thickness = MARKER_SIZE.Thick;
     thickButton.setAttribute("class", "selected-tool");
     thinButton.setAttribute("class", "");
 });

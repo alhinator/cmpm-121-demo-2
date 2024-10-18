@@ -102,4 +102,5 @@ canvas{
   border: #213547;
   border-style: dotted;
   background-color: white; 
+  cursor:none;
 }
