@@ -27,6 +27,7 @@ export class Tool {
             ctx.stroke();
         } else {
             ctx.beginPath();
+            ctx.font = "16px sans serif";
             ctx.fillText(this.currentEmoji, this.xpos, this.ypos);
         }
     }

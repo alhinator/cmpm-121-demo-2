@@ -79,6 +79,7 @@ class Emoji {
     }
     display(ctx: CanvasRenderingContext2D) {
         ctx.beginPath();
+        ctx.font = "16px sans serif";
         ctx.fillText(this.emoticon, this.x, this.y);
     }
     move(_newX: number, _newY: number) {
