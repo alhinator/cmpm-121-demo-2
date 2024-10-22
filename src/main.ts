@@ -11,6 +11,12 @@ export enum MARKER_SIZE {
     Thick = 5,
 }
 let currSize: MARKER_SIZE = MARKER_SIZE.Thin;
+interface color {
+    r:number;
+    g:number;
+    b:number;
+}
+let currColor: color = { r: 0, g: 0, b: 0 };
 
 //create title
 const mainHeader = document.createElement("h1");
@@ -21,8 +27,6 @@ const mainCanvas = document.createElement("canvas");
 mainCanvas.setAttribute("width", "256px");
 mainCanvas.setAttribute("height", "256px");
 app.appendChild(mainCanvas);
-
-let toolOverride:boolean = false;
 
 /*cursor code modified from https://quant-paint.glitch.me/paint0.html, 
 https://quant-paint.glitch.me/paint1.html
@@ -40,10 +44,12 @@ class Coord {
     x: number[] = [];
     y: number[] = [];
     thickness: MARKER_SIZE;
+    col:color;
     constructor(_x: number, _y: number, _thicc: MARKER_SIZE) {
         this.x.push(_x);
         this.y.push(_y);
         this.thickness = _thicc;
+        this.col = {r:currColor.r, g:currColor.g, b:currColor.b};
     }
     public display(ctx: CanvasRenderingContext2D) {
         if (this.x.length != this.y.length) {
@@ -51,6 +57,9 @@ class Coord {
             return -1;
         }
         ctx.lineWidth = this.thickness;
+
+        ctx.strokeStyle =
+            "rgb(" + this.col.r + " " + this.col.g + " " + this.col.b + ")";
         ctx.beginPath();
         ctx.moveTo(this.x[0], this.y[0]);
         for (let i = 0; i < this.x.length; i++) {
@@ -287,3 +296,45 @@ function doDownload() {
     anchor.download = "sketchpad.png";
     anchor.click();
 }
+
+const colorDiv = document.createElement("div");
+const sliderTxt = document.createElement("p");
+sliderTxt.innerText = "Color sliders RGB";
+colorDiv.appendChild(sliderTxt);
+
+const sliderR = document.createElement("input");
+sliderR.setAttribute("type", "range");
+sliderR.setAttribute("id", "R");
+sliderR.setAttribute("min", "0");
+sliderR.setAttribute("max", "255");
+sliderR.setAttribute("value", "0");
+sliderR.addEventListener("change", updateColor);
+const sliderG = document.createElement("input");
+sliderG.setAttribute("type", "range");
+sliderG.setAttribute("id", "G");
+sliderG.setAttribute("min", "0");
+sliderG.setAttribute("max", "255");
+sliderG.setAttribute("value", "0");
+
+sliderG.addEventListener("change", updateColor);
+
+const sliderB = document.createElement("input");
+sliderB.setAttribute("type", "range");
+sliderB.setAttribute("id", "B");
+sliderB.setAttribute("min", "0");
+sliderB.setAttribute("max", "255");
+sliderB.setAttribute("value", "0");
+
+sliderB.addEventListener("change", updateColor);
+
+colorDiv.appendChild(sliderR);
+colorDiv.appendChild(sliderG);
+colorDiv.appendChild(sliderB);
+
+function updateColor() {
+    currColor.r = parseInt(sliderR.value);
+    currColor.g = parseInt(sliderG.value);
+    currColor.b = parseInt(sliderB.value);
+}
+
+app.appendChild(colorDiv);
