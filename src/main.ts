@@ -22,6 +22,8 @@ mainCanvas.setAttribute("width", "256px");
 mainCanvas.setAttribute("height", "256px");
 app.appendChild(mainCanvas);
 
+let toolOverride:boolean = false;
+
 /*cursor code modified from https://quant-paint.glitch.me/paint0.html, 
 https://quant-paint.glitch.me/paint1.html
 */
@@ -256,4 +258,31 @@ function emojiCallback(_theButton: HTMLButtonElement) {
     _theButton.setAttribute("class", "selected-tool");
     mainCanvas.dispatchEvent(toolMoved);
     Tool.emojiMode = _theButton.innerText;
+}
+
+const dlDiv = document.createElement("div");
+const dlButton = document.createElement("button");
+dlDiv.appendChild(dlButton);
+dlButton.innerText = "Download Sketch!";
+dlButton.addEventListener("click", doDownload);
+app.appendChild(dlDiv);
+function doDownload() {
+    const tmpCanvas = document.createElement("canvas");
+    tmpCanvas.setAttribute("width", "1024px");
+    tmpCanvas.setAttribute("height", "1024px");
+    const tmpCtx = tmpCanvas.getContext("2d");
+    if (tmpCtx == undefined) {
+        throw "scaled Canvas 2d context undefined.";
+    }
+    tmpCtx.scale(4, 4);
+    Coord.lines.forEach((element) => {
+        element.display(tmpCtx);
+    });
+    Emoji.placedEmotes.forEach((element) => {
+        element.display(tmpCtx);
+    });
+    const anchor = document.createElement("a");
+    anchor.href = tmpCanvas.toDataURL("image/png");
+    anchor.download = "sketchpad.png";
+    anchor.click();
 }
