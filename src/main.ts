@@ -1,11 +1,12 @@
 import "./style.css";
+import { Tool } from "./Tool";
 
 const APP_NAME = "Sticker Sketchpad aleghart";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
 document.title = APP_NAME;
 
-enum MARKER_SIZE {
+export enum MARKER_SIZE {
     Thin = 1,
     Thick = 5,
 }
@@ -27,47 +28,6 @@ https://quant-paint.glitch.me/paint1.html
 const canvasContext = mainCanvas.getContext("2d");
 if (canvasContext == undefined) {
     throw "Canvas 2d context undefined.";
-}
-
-//cursor object is replaced with the Tool object
-class Tool {
-    static xpos: number;
-    static ypos: number;
-    static active: boolean = false;
-    static thickness: MARKER_SIZE = MARKER_SIZE.Thin;
-    static drawEmojis: boolean = false;
-    static currentEmoji: string;
-    static draw(ctx: CanvasRenderingContext2D) {
-        if (!this.drawEmojis) {
-            ctx.lineWidth = this.thickness;
-            ctx.beginPath();
-            ctx.ellipse(
-                this.xpos,
-                this.ypos,
-                this.thickness,
-                this.thickness,
-                0,
-                0,
-                360
-            );
-            ctx.stroke();
-        } else {
-            ctx.beginPath();
-            ctx.fillText(this.currentEmoji, this.xpos, this.ypos);
-        }
-    }
-    static thinMode() {
-        this.thickness = MARKER_SIZE.Thin;
-        this.drawEmojis = false;
-    }
-    static thickMode() {
-        this.thickness = MARKER_SIZE.Thick;
-        this.drawEmojis = false;
-    }
-    static set emojiMode(_emoji: string) {
-        this.drawEmojis = true;
-        this.currentEmoji = _emoji;
-    }
 }
 
 //define the data structure we're using to store points
@@ -196,7 +156,7 @@ clearCanvasButton.addEventListener("click", () => {
     canvasContext.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
     Coord.lines.splice(0, Coord.lines.length);
     Coord.redoLines.splice(0, Coord.redoLines.length);
-    Emoji.placedEmotes.splice(0, Emoji.placedEmotes.length)
+    Emoji.placedEmotes.splice(0, Emoji.placedEmotes.length);
     mainCanvas.dispatchEvent(drawChanged);
 });
 
@@ -264,23 +224,32 @@ app.appendChild(markerHolder);
 
 //emoji buttons
 const emojiSection = document.createElement("div");
-//do clear, undo, redo buttons
-//clear
-const emote1 = document.createElement("button");
-emojiSection.appendChild(emote1);
-emote1.innerText = "✨";
-emote1.addEventListener("click", (event) => emojiCallback(emote1));
+const availableEmojis: string[] = ["✨", "💀", "👍"];
+let emojiButtons: HTMLButtonElement[] = [];
 
-const emote2 = document.createElement("button");
-emojiSection.appendChild(emote2);
-emote2.innerText = "💀";
-emote2.addEventListener("click", (event) => emojiCallback(emote2));
+const customButton = document.createElement("button");
 
-const emote3 = document.createElement("button");
-emojiSection.appendChild(emote3);
-emote3.innerText = "👍";
-emote3.addEventListener("click", (event) => emojiCallback(emote3));
+customButton.innerText = "Custom Sticker";
+customButton.addEventListener("click", (event) => {
+    let t = prompt("Custom Sticker Text", "🤓");
+    if (t !== null) {
+        makeEmojiButtons(emojiButtons, [t]);
+    }
+});
+emojiSection.appendChild(customButton);
+
+makeEmojiButtons(emojiButtons, availableEmojis);
 app.appendChild(emojiSection);
+
+function makeEmojiButtons(_export: HTMLButtonElement[], _arr: string[]) {
+    _arr.forEach((element) => {
+        let tmp = document.createElement("button");
+        tmp.innerText = element;
+        tmp.addEventListener("click", (event) => emojiCallback(tmp));
+        emojiSection.appendChild(tmp);
+        _export.push(tmp);
+    });
+}
 
 function emojiCallback(_theButton: HTMLButtonElement) {
     mainCanvas.dispatchEvent(buttonClear);
