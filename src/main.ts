@@ -302,6 +302,8 @@ const sliderTxt = document.createElement("p");
 sliderTxt.innerText = "Color sliders RGB";
 colorDiv.appendChild(sliderTxt);
 
+
+
 const sliderR = document.createElement("input");
 sliderR.setAttribute("type", "range");
 sliderR.setAttribute("id", "R");
@@ -309,13 +311,13 @@ sliderR.setAttribute("min", "0");
 sliderR.setAttribute("max", "255");
 sliderR.setAttribute("value", "0");
 sliderR.addEventListener("change", updateColor);
+
 const sliderG = document.createElement("input");
 sliderG.setAttribute("type", "range");
 sliderG.setAttribute("id", "G");
 sliderG.setAttribute("min", "0");
 sliderG.setAttribute("max", "255");
 sliderG.setAttribute("value", "0");
-
 sliderG.addEventListener("change", updateColor);
 
 const sliderB = document.createElement("input");

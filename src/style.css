@@ -104,3 +104,15 @@ canvas{
   background-color: white; 
   cursor:none;
 }
+
+#R {
+  accent-color: red; 
+}
+
+#G {
+  accent-color: green; 
+}
+
+#B {
+  accent-color: blue; 
+}
