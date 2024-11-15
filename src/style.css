@@ -81,7 +81,7 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
-.selected-tool{
+.selected-tool {
   background-color: #4d4d4d;
 }
 
@@ -98,21 +98,21 @@ button:focus-visible {
   }
 }
 
-canvas{
+canvas {
   border: #213547;
   border-style: dotted;
-  background-color: white; 
-  cursor:none;
+  background-color: white;
+  cursor: none;
 }
 
 #R {
-  accent-color: red; 
+  accent-color: red;
 }
 
 #G {
-  accent-color: green; 
+  accent-color: green;
 }
 
 #B {
-  accent-color: blue; 
+  accent-color: blue;
 }
